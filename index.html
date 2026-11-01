@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#050816" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="نبض الأسواق" />
+<meta name="description" content="لوحة عربية حية للأخبار والأحداث والمؤشرات والأسعار — للعرض فقط" />
+<title>نبض الأسواق ⚡ لوحة حية</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="apple-touch-icon" href="./icon-180.png" />
+<link rel="icon" href="./icon-192.png" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+:root {
+  --bg: #050816;
+  --bg2: #0b1228;
+  --card: rgba(14, 22, 48, 0.78);
+  --stroke: rgba(0, 255, 200, 0.18);
+  --text: #e8f1ff;
+  --muted: #8aa0c6;
+  --cyan: #00f5d4;
+  --magenta: #ff2bd6;
+  --blue: #4cc9f0;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #fbbf24;
+  --glow: 0 0 24px rgba(0, 245, 212, 0.25);
+  --font: "Segoe UI", "Tahoma", "Noto Sans Arabic", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(255,43,214,.12), transparent 50%),
+    radial-gradient(900px 500px at -10% 20%, rgba(0,245,212,.10), transparent 45%),
+    linear-gradient(180deg, #050816 0%, #070b1a 50%, #050816 100%);
+}
+a { color: var(--cyan); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 16px 14px 40px; }
+.header {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; padding: 14px 16px; border: 1px solid var(--stroke); border-radius: 18px;
+  background: linear-gradient(135deg, rgba(12,20,45,.9), rgba(8,12,30,.75));
+  box-shadow: var(--glow);
+}
+.brand { display: flex; gap: 12px; align-items: center; }
+.logo {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--cyan), var(--magenta));
+  display:grid; place-items:center; font-size: 22px; box-shadow: var(--glow);
+}
+h1 { margin: 0; font-size: 1.25rem; letter-spacing: .3px; }
+.sub { color: var(--muted); font-size: .82rem; margin-top: 2px; }
+.meta { text-align: left; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+.badge {
+  display:inline-flex; align-items:center; gap:6px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(0,245,212,.35); color: var(--cyan); background: rgba(0,245,212,.08);
+  font-size: .75rem;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.ticker-wrap {
+  overflow: hidden; border: 1px solid var(--stroke); border-radius: 14px; margin-bottom: 14px;
+  background: rgba(8,14,34,.85); position: relative;
+}
+.ticker-wrap::before, .ticker-wrap::after {
+  content:""; position:absolute; top:0; bottom:0; width:40px; z-index:2; pointer-events:none;
+}
+.ticker-wrap::before { right:0; background: linear-gradient(270deg, rgba(5,8,22,1), transparent); }
+.ticker-wrap::after { left:0; background: linear-gradient(90deg, rgba(5,8,22,1), transparent); }
+.ticker {
+  display:flex; gap: 28px; white-space: nowrap; padding: 10px 0;
+  animation: scroll 55s linear infinite; width: max-content;
+}
+.ticker:hover { animation-play-state: paused; }
+@keyframes scroll { from { transform: translateX(-20%); } to { transform: translateX(40%); } }
+.ticker a { color: var(--text); font-size: .86rem; }
+.ticker .src { color: var(--magenta); font-weight: 700; margin-left: 6px; }
+.grid { display:grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+@media (max-width: 920px) { .grid { grid-template-columns: 1fr; } .meta { text-align: right; } }
+.card {
+  background: var(--card); border: 1px solid var(--stroke); border-radius: 18px; padding: 14px;
+  backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.card h2 {
+  margin: 0 0 10px; font-size: 1rem; display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+.card h2 .src { color: var(--muted); font-size: .72rem; font-weight: 500; }
+#map { height: 380px; border-radius: 14px; border: 1px solid rgba(76,201,240,.25); overflow:hidden; }
+.metrics { display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 700px) { .metrics { grid-template-columns: 1fr; } #map { height: 300px; } }
+.metric {
+  padding: 12px; border-radius: 14px; background: rgba(6,12,30,.75);
+  border: 1px solid rgba(76,201,240,.15);
+}
+.metric .label { color: var(--muted); font-size: .75rem; margin-bottom: 6px; }
+.metric .value { font-size: 1.35rem; font-weight: 800; letter-spacing: .3px; font-variant-numeric: tabular-nums; }
+.metric .chg { font-size: .82rem; margin-top: 4px; font-weight: 700; }
+.up { color: var(--green); } .down { color: var(--red); } .flat { color: var(--muted); }
+.charts { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+@media (max-width: 700px) { .charts { grid-template-columns: 1fr; } }
+.chart-box {
+  background: rgba(6,12,30,.75); border: 1px solid rgba(0,245,212,.12); border-radius: 12px; padding: 8px;
+}
+.chart-box canvas { width: 100% !important; height: 110px !important; }
+.table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.table th, .table td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,.06); text-align: right; }
+.table th { color: var(--muted); font-weight: 600; }
+.pill {
+  display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700;
+}
+.pill.high { background: rgba(239,68,68,.15); color: #ff8a8a; }
+.pill.med { background: rgba(251,191,36,.15); color: #fbbf24; }
+.pill.low { background: rgba(34,197,94,.12); color: #86efac; }
+.pill.holiday { background: rgba(76,201,240,.12); color: #7dd3fc; }
+.status {
+  margin-top: 8px; color: var(--muted); font-size: .75rem; line-height: 1.5;
+}
+.warn {
+  margin-top: 8px; padding: 8px 10px; border-radius: 10px;
+  background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.25); color: #fde68a; font-size: .78rem;
+}
+.footer {
+  margin-top: 16px; color: var(--muted); font-size: .75rem; text-align: center; line-height: 1.7;
+}
+.pair-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:8px; }
+@media (max-width:700px){ .pair-grid { grid-template-columns: repeat(2,1fr);} }
+.pair { padding:10px; border-radius:12px; background:rgba(6,12,30,.75); border:1px solid rgba(255,43,214,.12); }
+.pair .n { color:var(--muted); font-size:.72rem; }
+.pair .v { font-weight:800; margin-top:4px; font-variant-numeric: tabular-nums; }
+.leaflet-container { background: #07101f; font: 12px/1.4 var(--font); }
+.leaflet-popup-content-wrapper { background:#0d1733; color:#e8f1ff; border:1px solid rgba(0,245,212,.3); }
+.leaflet-popup-tip { background:#0d1733; }
+.leaflet-control-attribution { background: rgba(5,8,22,.7) !important; color: #8aa0c6 !important; }
+.skeleton { opacity: .55; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <div class="brand">
+      <div class="logo">⚡</div>
+      <div>
+        <h1>نبض الأسواق — لوحة حية</h1>
+        <div class="sub">عرض فقط · بدون توصيات تداول · توقيت الرياض · غير مرتبط بمشروع MARX</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="badge"><span class="dot"></span> تحديث تلقائي</div>
+      <div id="clock">—</div>
+      <div id="lastRefresh">آخر تحديث: —</div>
+      <div id="feedStatus" class="badge" style="margin-top:6px">المصادر: جارٍ الاتصال…</div>
+    </div>
+  </header>
+
+  <div class="ticker-wrap" aria-label="شريط أخبار عاجلة">
+    <div class="ticker" id="ticker">جارٍ جلب الأخبار…</div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <h2>
+        <span>🌍 خريطة الأحداث الاقتصادية والجيوسياسية</span>
+        <span class="src" id="mapSource">المصدر: —</span>
+      </h2>
+      <div id="map"></div>
+      <div class="status" id="mapStatus">جارٍ التحميل…</div>
+    </section>
+
+    <section class="card">
+      <h2>
+        <span>📈 أسعار رئيسية (عرض فقط)</span>
+        <span class="src">Binance WS لحظي · FX حي · أسهم/نفط لقطة Actions</span>
+      </h2>
+      <div class="metrics" id="priceMetrics"></div>
+      <div class="charts">
+        <div class="chart-box"><canvas id="chartOil"></canvas></div>
+        <div class="chart-box"><canvas id="chartGold"></canvas></div>
+        <div class="chart-box"><canvas id="chartBtc"></canvas></div>
+        <div class="chart-box"><canvas id="chartSpx"></canvas></div>
+      </div>
+      <h2 style="margin-top:14px"><span>💱 أزواج عملات مهمة</span><span class="src">open.er-api.com</span></h2>
+      <div class="pair-grid" id="fxGrid"></div>
+      <div class="status" id="priceStatus"></div>
+    </section>
+  </div>
+
+  <div class="grid" style="margin-top:14px">
+    <section class="card">
+      <h2>
+        <span>🏛️ مؤشرات اقتصادية لكبرى الاقتصادات</span>
+        <span class="src">World Bank + BIS</span>
+      </h2>
+      <div style="overflow:auto">
+        <table class="table" id="indTable">
+          <thead>
+            <tr><th>الدولة</th><th>التضخم %</th><th>الفائدة %</th><th>الناتج المحلي</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="status" id="indStatus"></div>
+    </section>
+
+    <section class="card">
+      <h2>
+        <span>🗓️ تقويم الأحداث الاقتصادية القادمة</span>
+        <span class="src">Forex Factory mirror</span>
+      </h2>
+      <div style="overflow:auto; max-height:420px">
+        <table class="table" id="calTable">
+          <thead>
+            <tr><th>الوقت (الرياض)</th><th>الدولة</th><th>الحدث</th><th>الأثر</th><th>السابق</th><th>المتوقع</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="status" id="calStatus"></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:14px">
+    <h2>
+      <span>📰 موجز الأخبار مع الروابط</span>
+      <span class="src" id="newsSource">Reuters / AP / Bloomberg</span>
+    </h2>
+    <div style="overflow:auto; max-height:320px">
+      <table class="table" id="newsTable">
+        <thead><tr><th>المصدر</th><th>العنوان</th><th>الوقت</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="status" id="newsStatus"></div>
+  </section>
+
+  <footer class="footer">
+    كل رقم يعرض مصدره · البيانات حقيقية من واجهات مجانية · لا توجد توصيات أو إشارات تداول<br/>
+    لإضافة اللوحة للشاشة الرئيسية في الآيفون: Safari ← مشاركة ← إضافة إلى الشاشة الرئيسية
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
