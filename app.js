@@ -208,30 +208,63 @@
   $('clock').textContent = clockNow();
 
 
-  // Force TradingView iframe to fill the chart box (TV often injects a short iframe)
+  // Force TradingView iframe to fill chart box — NO attribute observer (avoids infinite loop)
   (function fitTv() {
     const box = document.querySelector('.tv-chart');
     if (!box) return;
+    let last = '';
+    let applying = false;
     const apply = () => {
-      const h = box.clientHeight;
-      const w = box.clientWidth;
-      box.style.height = box.classList.contains('tv-chart') ? '' : box.style.height;
-      const widget = box.querySelector('.tradingview-widget-container__widget') || box;
-      widget.style.height = h + 'px';
-      widget.style.width = '100%';
-      box.querySelectorAll('iframe').forEach((f) => {
-        f.style.height = h + 'px';
-        f.style.width = '100%';
-        f.setAttribute('height', String(h));
-        f.setAttribute('width', String(w));
-      });
+      if (applying) return;
+      const h = Math.round(box.clientHeight);
+      const w = Math.round(box.clientWidth);
+      if (h < 40 || w < 40) return;
+      const key = h + 'x' + w;
+      const iframe = box.querySelector('iframe');
+      const curH = iframe ? iframe.style.height : '';
+      if (key === last && curH === h + 'px') return;
+      applying = true;
+      try {
+        const widget = box.querySelector('.tradingview-widget-container__widget') || box;
+        if (widget.style.height !== h + 'px') widget.style.height = h + 'px';
+        widget.style.width = '100%';
+        box.querySelectorAll('iframe').forEach((f) => {
+          if (f.style.height !== h + 'px') f.style.height = h + 'px';
+          f.style.width = '100%';
+        });
+        last = key;
+      } finally {
+        applying = false;
+      }
     };
     apply();
-    const mo = new MutationObserver(apply);
-    mo.observe(box, { childList: true, subtree: true, attributes: true });
+    const mo = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'childList' && (m.addedNodes.length || m.removedNodes.length)) {
+          apply();
+          break;
+        }
+      }
+    });
+    mo.observe(box, { childList: true, subtree: true });
     window.addEventListener('resize', apply);
-    setInterval(apply, 1500);
+    setTimeout(apply, 800);
+    setTimeout(apply, 2500);
   })();
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+  // Service worker: network-first shell + one-shot reload on update
+  if ('serviceWorker' in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      const flag = 'sw-reloaded-v3-20261102';
+      if (sessionStorage.getItem(flag)) return;
+      refreshing = true;
+      try { sessionStorage.setItem(flag, '1'); } catch (_) {}
+      location.reload();
+    });
+    navigator.serviceWorker.register('./sw.js?v=v3-20261102').then((reg) => {
+      reg.update().catch(() => {});
+    }).catch(() => {});
+  }
 })();
