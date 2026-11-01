@@ -207,5 +207,31 @@
   setInterval(() => { $('clock').textContent = clockNow(); }, 1000);
   $('clock').textContent = clockNow();
 
+
+  // Force TradingView iframe to fill the chart box (TV often injects a short iframe)
+  (function fitTv() {
+    const box = document.querySelector('.tv-chart');
+    if (!box) return;
+    const apply = () => {
+      const h = box.clientHeight;
+      const w = box.clientWidth;
+      box.style.height = box.classList.contains('tv-chart') ? '' : box.style.height;
+      const widget = box.querySelector('.tradingview-widget-container__widget') || box;
+      widget.style.height = h + 'px';
+      widget.style.width = '100%';
+      box.querySelectorAll('iframe').forEach((f) => {
+        f.style.height = h + 'px';
+        f.style.width = '100%';
+        f.setAttribute('height', String(h));
+        f.setAttribute('width', String(w));
+      });
+    };
+    apply();
+    const mo = new MutationObserver(apply);
+    mo.observe(box, { childList: true, subtree: true, attributes: true });
+    window.addEventListener('resize', apply);
+    setInterval(apply, 1500);
+  })();
+
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 })();
