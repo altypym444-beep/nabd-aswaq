@@ -138,6 +138,41 @@ h1 { margin: 0; font-size: 1.25rem; letter-spacing: .3px; }
 .leaflet-popup-tip { background:#0d1733; }
 .leaflet-control-attribution { background: rgba(5,8,22,.7) !important; color: #8aa0c6 !important; }
 .skeleton { opacity: .55; }
+
+.tv-block { margin-bottom: 14px; }
+.tv-tape {
+  border: 1px solid var(--stroke); border-radius: 14px; overflow: hidden;
+  background: rgba(8,14,34,.85); margin-bottom: 14px;
+}
+.tv-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+@media (max-width: 920px) { .tv-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .tv-grid { grid-template-columns: 1fr; } }
+.tv-item {
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(0,245,212,.18);
+  background: rgba(6,12,30,.85);
+  min-height: 220px;
+}
+.tv-item h3 {
+  margin: 0; padding: 8px 10px 0; font-size: .82rem; color: var(--muted); font-weight: 600;
+}
+.tv-note {
+  margin-top: 8px; color: var(--muted); font-size: .75rem; line-height: 1.55;
+}
+
+.yt-live { margin-top: 12px; }
+.yt-frame-wrap {
+  position: relative; width: 100%; padding-top: 56.25%;
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(255,43,214,.22);
+  background: #000;
+}
+.yt-frame-wrap iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+}
+.yt-links { margin-top: 8px; font-size: .78rem; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -158,6 +193,156 @@ h1 { margin: 0; font-size: 1.25rem; letter-spacing: .3px; }
     </div>
   </header>
 
+
+  <section class="card tv-block" id="tvLive">
+    <h2>
+      <span>📡 بث الأسعار المباشر — نفط وذهب وأسواق</span>
+      <span class="src">المصدر: TradingView (ودجات رسمية مجانية)</span>
+    </h2>
+    <div class="tv-tape">
+      <!-- TradingView Widget BEGIN: ticker tape -->
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+        {
+          "symbols": [
+            {"proName": "TVC:USOIL", "title": "نفط WTI"},
+            {"proName": "TVC:UKOIL", "title": "نفط برنت"},
+            {"proName": "OANDA:XAUUSD", "title": "ذهب"},
+            {"proName": "BINANCE:BTCUSDT", "title": "بتكوين"},
+            {"proName": "FOREXCOM:SPXUSD", "title": "S&P 500"},
+            {"proName": "FOREXCOM:NSXUSD", "title": "ناسداك 100"},
+            {"proName": "FX:EURUSD", "title": "EUR/USD"},
+            {"proName": "FX:GBPUSD", "title": "GBP/USD"},
+            {"proName": "FX:USDJPY", "title": "USD/JPY"},
+            {"proName": "FX_IDC:USDSAR", "title": "USD/SAR"},
+            {"proName": "NASDAQ:AAPL", "title": "Apple"},
+            {"proName": "NASDAQ:MSFT", "title": "Microsoft"}
+          ],
+          "showSymbolLogo": true,
+          "isTransparent": true,
+          "displayMode": "adaptive",
+          "colorTheme": "dark",
+          "locale": "ar"
+        }
+        </script>
+      </div>
+      <!-- TradingView Widget END -->
+    </div>
+
+    <div class="tv-grid">
+      <div class="tv-item">
+        <h3>نفط WTI · TVC:USOIL</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"TVC:USOIL","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>نفط برنت · TVC:UKOIL</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"TVC:UKOIL","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>ذهب · OANDA:XAUUSD</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"OANDA:XAUUSD","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>S&P 500 · FOREXCOM:SPXUSD</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"FOREXCOM:SPXUSD","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>ناسداك 100 · FOREXCOM:NSXUSD</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"FOREXCOM:NSXUSD","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>بتكوين · BINANCE:BTCUSDT</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"BINANCE:BTCUSDT","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>Apple · NASDAQ:AAPL</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"NASDAQ:AAPL","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>Microsoft · NASDAQ:MSFT</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"NASDAQ:MSFT","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+      <div class="tv-item">
+        <h3>EUR/USD · FX:EURUSD</h3>
+        <div class="tradingview-widget-container" style="height:200px">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {"symbol":"FX:EURUSD","width":"100%","height":"200","locale":"ar","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+          </script>
+        </div>
+      </div>
+    </div>
+    <div class="tv-note">
+      المصدر الظاهر في الودجات: <strong>TradingView</strong> (تضمين رسمي مجاني — بدون سحب من Investing.com).
+      بعض الرموز قد تظهر بتأخير حسب قواعد البورصة/الوسيط، بينما الفوركس وكريبتو Binance غالباً أقرب للمباشر حسب تغذية TradingView.
+      للعرض فقط — ليست توصيات تداول.
+    </div>
+
+    <div class="yt-live">
+      <h2 style="margin-top:14px">
+        <span>📺 بث تلفزيوني اقتصادي مباشر</span>
+        <span class="src">مصدر رسمي على YouTube · الشرق بلومبرغ</span>
+      </h2>
+      <div class="yt-frame-wrap">
+        <iframe
+          src="https://www.youtube.com/embed/f6VpkfV7m4Y?autoplay=0&mute=1&playsinline=1&rel=0"
+          title="تلفزيون الشرق بلومبرغ مباشر | Asharq Bloomberg Live"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      </div>
+      <div class="yt-links">
+        بث رسمي من قناة <strong>Asharq News - الشرق للأخبار</strong>
+        (<a href="https://www.youtube.com/channel/UCRJUVYt9gjg8MnlGacySUdg" target="_blank" rel="noopener">قناة YouTube</a>)
+        · <a href="https://www.youtube.com/watch?v=f6VpkfV7m4Y" target="_blank" rel="noopener">فتح البث المباشر</a>
+        · تم التحقق: isLive=true و playableInEmbed=true
+        · بديل رسمي أيضاً: <a href="https://www.youtube.com/watch?v=n7eQejkXbnM" target="_blank" rel="noopener">العربية مباشر</a>
+      </div>
+    </div>
+  </section>
+
   <div class="ticker-wrap" aria-label="شريط أخبار عاجلة">
     <div class="ticker" id="ticker">جارٍ جلب الأخبار…</div>
   </div>
@@ -175,7 +360,7 @@ h1 { margin: 0; font-size: 1.25rem; letter-spacing: .3px; }
     <section class="card">
       <h2>
         <span>📈 أسعار رئيسية (عرض فقط)</span>
-        <span class="src">Binance WS لحظي · FX حي · أسهم/نفط لقطة Actions</span>
+        <span class="src">TradingView مباشر أعلاه · Binance WS إضافي للكريبتو</span>
       </h2>
       <div class="metrics" id="priceMetrics"></div>
       <div class="charts">
@@ -239,7 +424,7 @@ h1 { margin: 0; font-size: 1.25rem; letter-spacing: .3px; }
   </section>
 
   <footer class="footer">
-    كل رقم يعرض مصدره · البيانات حقيقية من واجهات مجانية · لا توجد توصيات أو إشارات تداول<br/>
+    الأسعار الحية للنفط والذهب والأسواق عبر ودجات TradingView الرسمية · كريبتو إضافي عبر Binance WebSocket · للعرض فقط<br/>
     لإضافة اللوحة للشاشة الرئيسية في الآيفون: Safari ← مشاركة ← إضافة إلى الشاشة الرئيسية
   </footer>
 </div>
