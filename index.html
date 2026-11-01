@@ -3,280 +3,491 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#070b16" />
+<meta name="theme-color" content="#05070d" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="نبض الأسواق" />
-<meta name="description" content="لوحة أسعار حية: نفط، ذهب، أسواق — TradingView + Binance — للعرض فقط" />
-<title>نبض الأسواق</title>
+<meta name="description" content="لوحة أسعار حية — نفط ذهب أسواق — TradingView + Binance — للعرض فقط" />
+<title>نبض الأسواق · Live Terminal</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <link rel="apple-touch-icon" href="./icon-180.png" />
 <link rel="icon" href="./icon-192.png" />
 <style>
 :root {
-  --bg: #070b16;
-  --card: rgba(12, 18, 36, 0.92);
-  --line: rgba(255,255,255,0.08);
-  --text: #ffffff;
-  --muted: #9aa6bf;
-  --green: #22c55e;
-  --red: #ef4444;
+  --bg: #05070d;
+  --panel: #0a0f1a;
+  --panel2: #0d1424;
+  --line: rgba(120, 140, 180, 0.14);
+  --line2: rgba(94, 234, 212, 0.18);
+  --text: #f4f7ff;
+  --muted: #8b97b0;
+  --dim: #5c6a84;
+  --green: #00e676;
+  --red: #ff5252;
   --cyan: #5eead4;
-  --font: "Segoe UI", Tahoma, system-ui, sans-serif;
-  --num: "Segoe UI", "Helvetica Neue", Arial, sans-serif; /* force Western digits */
+  --amber: #ffd166;
+  --blue: #5b8cff;
+  --font: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  --num: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); }
 body {
   min-height: 100vh;
   background:
-    radial-gradient(900px 420px at 100% 0%, rgba(94,234,212,.08), transparent 55%),
-    radial-gradient(700px 380px at 0% 20%, rgba(99,102,241,.10), transparent 50%),
-    #070b16;
+    linear-gradient(180deg, rgba(8,12,22,.96), #05070d 180px),
+    radial-gradient(1000px 500px at 85% -10%, rgba(91,140,255,.09), transparent 55%),
+    radial-gradient(800px 420px at 0% 0%, rgba(94,234,212,.07), transparent 50%),
+    #05070d;
 }
 a { color: var(--cyan); text-decoration: none; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 18px 14px 36px; }
-.top {
-  display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 16px;
+a:hover { text-decoration: underline; }
+
+.shell { max-width: 1440px; margin: 0 auto; padding: 10px 10px 28px; }
+
+/* Top bar — terminal chrome */
+.tb {
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  border: 1px solid var(--line); background: linear-gradient(180deg, #0e1526, #0a101c);
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 10px;
 }
-.brand h1 { margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: .2px; color: #fff; }
-.brand p { margin: 6px 0 0; color: var(--muted); font-size: .86rem; }
-.meta { text-align: left; color: var(--muted); font-size: .8rem; line-height: 1.55; }
-@media (max-width: 700px) { .meta { text-align: right; } }
-.pill {
+.tb-left { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.logo {
+  font-weight: 800; letter-spacing: .4px; font-size: 1.05rem; color: #fff;
+  display: flex; align-items: center; gap: 8px;
+}
+.logo .mark {
+  width: 10px; height: 10px; border-radius: 2px; background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+}
+.tag {
+  color: var(--dim); font-size: .72rem; border: 1px solid var(--line); border-radius: 4px;
+  padding: 2px 7px; letter-spacing: .6px; text-transform: uppercase;
+}
+.tb-right { text-align: left; color: var(--muted); font-size: .78rem; line-height: 1.45; font-family: var(--num); }
+@media (max-width: 720px) {
+  .tb { grid-template-columns: 1fr; }
+  .tb-right { text-align: right; }
+}
+.livepill {
   display: inline-flex; align-items: center; gap: 6px;
-  border: 1px solid var(--line); background: rgba(255,255,255,.03);
-  border-radius: 999px; padding: 4px 10px; color: var(--cyan); font-size: .75rem;
+  background: rgba(0,230,118,.08); border: 1px solid rgba(0,230,118,.28);
+  color: var(--green); border-radius: 999px; padding: 3px 9px; font-size: .72rem; font-weight: 700;
 }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
-.card {
-  background: var(--card); border: 1px solid var(--line); border-radius: 18px;
-  padding: 14px; margin-bottom: 14px; backdrop-filter: blur(8px);
+.livepill .d { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+
+/* Dense panel grid */
+.grid {
+  display: grid;
+  grid-template-columns: 1.35fr .95fr;
+  gap: 10px;
 }
-.card > h2 {
-  margin: 0 0 12px; font-size: 1rem; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-  align-items: baseline;
+@media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
 }
-.card > h2 .src { color: var(--muted); font-size: .72rem; font-weight: 500; }
-.tv-tape { border-radius: 12px; overflow: hidden; border: 1px solid var(--line); margin-bottom: 12px; }
-.tv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-@media (max-width: 900px) { .tv-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) { .tv-grid { grid-template-columns: 1fr; } }
-.tv-item {
-  border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: rgba(0,0,0,.25);
-  min-height: 210px;
+.panel-h {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 11px; border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);
 }
-.tv-item .lbl {
-  padding: 8px 10px 0; color: var(--muted); font-size: .78rem; font-weight: 600;
+.panel-h h2 {
+  margin: 0; font-size: .82rem; font-weight: 700; color: #e8eefc; letter-spacing: .2px;
 }
-.live-row {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 4px;
+.panel-h .src { color: var(--dim); font-size: .68rem; font-family: var(--num); }
+.panel-b { padding: 8px; }
+
+.full { grid-column: 1 / -1; }
+
+/* Metrics strip */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
 }
-@media (max-width: 900px) { .live-row { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1200px) { .metrics { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 640px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+
 .metric {
-  border: 1px solid var(--line); border-radius: 14px; padding: 14px 12px; background: rgba(255,255,255,.02);
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 10px 9px;
+  position: relative;
+  overflow: hidden;
 }
-.metric .k { color: var(--muted); font-size: .78rem; margin-bottom: 8px; }
+.metric::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 2px;
+  background: linear-gradient(180deg, var(--cyan), transparent);
+  opacity: .7;
+}
+.metric .k {
+  color: var(--muted); font-size: .7rem; font-weight: 600; margin-bottom: 6px;
+  display: flex; justify-content: space-between; gap: 6px;
+}
 .metric .v {
-  font-family: var(--num); font-variant-numeric: lining-nums tabular-nums;
-  font-size: clamp(1.55rem, 3.4vw, 2.05rem); font-weight: 800; color: #fff; letter-spacing: .3px;
-  line-height: 1.1;
+  font-family: var(--num);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: .2px;
+  line-height: 1.05;
 }
 .metric .chg {
-  font-family: var(--num); font-variant-numeric: lining-nums tabular-nums;
-  margin-top: 8px; font-size: .95rem; font-weight: 800;
+  font-family: var(--num);
+  font-variant-numeric: lining-nums tabular-nums;
+  margin-top: 6px; font-size: .84rem; font-weight: 800;
 }
-.metric .src { margin-top: 8px; color: var(--muted); font-size: .7rem; }
+.metric .src { margin-top: 5px; color: var(--dim); font-size: .62rem; font-family: var(--num); }
 .up { color: var(--green); } .down { color: var(--red); } .flat { color: var(--muted); }
-.yt-wrap { position: relative; width: 100%; padding-top: 56.25%; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid var(--line); }
-.yt-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.note, .status { margin-top: 10px; color: var(--muted); font-size: .75rem; line-height: 1.55; }
-.table { width: 100%; border-collapse: collapse; font-size: .86rem; }
-.table th, .table td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,.06); text-align: right; color: #fff; }
-.table th { color: var(--muted); font-weight: 600; }
-.table .num { font-family: var(--num); font-variant-numeric: lining-nums tabular-nums; font-weight: 700; color: #fff; }
-.badge-impact {
-  display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700;
+
+/* TradingView blocks */
+.tv-tape { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #000; }
+.tv-chart { height: 460px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: #000; }
+@media (max-width: 700px) { .tv-chart { height: 360px; } }
+.tv-overview { height: 420px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: #000; }
+@media (max-width: 700px) { .tv-overview { height: 340px; } }
+
+.mini-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;
 }
-.badge-impact.high { background: rgba(239,68,68,.15); color: #fda4a4; }
-.badge-impact.med { background: rgba(251,191,36,.12); color: #fcd34d; }
-.badge-impact.low { background: rgba(34,197,94,.12); color: #86efac; }
-.badge-impact.holiday { background: rgba(148,163,184,.12); color: #cbd5e1; }
-.footer { text-align: center; color: var(--muted); font-size: .74rem; line-height: 1.7; margin-top: 8px; }
-.scroll { overflow: auto; max-height: 420px; }
+@media (max-width: 900px) { .mini-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .mini-grid { grid-template-columns: 1fr; } }
+.tv-mini {
+  border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #000; min-height: 168px;
+}
+.tv-mini .lbl {
+  padding: 6px 8px 0; color: var(--dim); font-size: .68rem; font-weight: 600; font-family: var(--num);
+}
+
+/* Stream */
+.yt-wrap {
+  position: relative; width: 100%; padding-top: 56.25%;
+  border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--line);
+}
+.yt-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* Calendar */
+.scroll { overflow: auto; max-height: 380px; }
+.table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.table th, .table td {
+  padding: 8px 7px; border-bottom: 1px solid rgba(255,255,255,.05); text-align: right; color: var(--text);
+}
+.table th { color: var(--dim); font-weight: 700; font-size: .68rem; letter-spacing: .3px; position: sticky; top: 0; background: var(--panel); }
+.table .num {
+  font-family: var(--num); font-variant-numeric: lining-nums tabular-nums; font-weight: 700; color: #fff;
+}
+.badge {
+  display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: .66rem; font-weight: 800; font-family: var(--num);
+}
+.badge.high { background: rgba(255,82,82,.14); color: #ff8a80; border: 1px solid rgba(255,82,82,.25); }
+.badge.med { background: rgba(255,209,102,.12); color: #ffd166; border: 1px solid rgba(255,209,102,.22); }
+.badge.low { background: rgba(0,230,118,.10); color: #69f0ae; border: 1px solid rgba(0,230,118,.2); }
+.badge.holiday { background: rgba(148,163,184,.10); color: #cbd5e1; border: 1px solid rgba(148,163,184,.2); }
+
+.note, .status { margin-top: 8px; color: var(--dim); font-size: .7rem; line-height: 1.5; font-family: var(--num); }
+.footer {
+  text-align: center; color: var(--dim); font-size: .68rem; line-height: 1.7; margin-top: 12px; font-family: var(--num);
+}
+.side-stack { display: flex; flex-direction: column; gap: 10px; }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <h1>نبض الأسواق</h1>
-      <p>أسعار حية للعرض فقط · بدون توصيات · توقيت الرياض</p>
+<div class="shell">
+  <header class="tb">
+    <div class="tb-left">
+      <div class="logo"><span class="mark"></span> نبض الأسواق</div>
+      <span class="tag">TERMINAL</span>
+      <span class="livepill"><span class="d"></span> LIVE</span>
+      <span class="tag" id="feedStatus">CONNECTING</span>
     </div>
-    <div class="meta">
-      <div class="pill"><span class="dot"></span> Live</div>
+    <div class="tb-right">
       <div id="clock">—</div>
-      <div id="feedStatus">Connecting…</div>
+      <div>Display only · Asia/Riyadh · No trade advice</div>
     </div>
   </header>
 
-  <section class="card">
-    <h2>
-      <span>بث الأسعار المباشر</span>
-      <span class="src">TradingView</span>
-    </h2>
-    <div class="tv-tape">
-      <div class="tradingview-widget-container">
-        <div class="tradingview-widget-container__widget"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
-        {
-          "symbols": [
-            {"proName": "TVC:USOIL", "title": "WTI"},
-            {"proName": "TVC:UKOIL", "title": "Brent"},
-            {"proName": "OANDA:XAUUSD", "title": "Gold"},
-            {"proName": "BINANCE:BTCUSDT", "title": "BTC"},
-            {"proName": "FOREXCOM:SPXUSD", "title": "S&P 500"},
-            {"proName": "FOREXCOM:NSXUSD", "title": "Nasdaq 100"},
-            {"proName": "FX:EURUSD", "title": "EUR/USD"},
-            {"proName": "FX:GBPUSD", "title": "GBP/USD"},
-            {"proName": "FX:USDJPY", "title": "USD/JPY"},
-            {"proName": "FX_IDC:USDSAR", "title": "USD/SAR"},
-            {"proName": "NASDAQ:AAPL", "title": "AAPL"},
-            {"proName": "NASDAQ:MSFT", "title": "MSFT"}
-          ],
-          "showSymbolLogo": true,
-          "isTransparent": true,
-          "displayMode": "adaptive",
-          "colorTheme": "dark",
-          "locale": "en"
-        }
-        </script>
-      </div>
+  <!-- Hero live metrics -->
+  <section class="panel" style="margin-bottom:10px">
+    <div class="panel-h">
+      <h2>أسعار حية سريعة</h2>
+      <span class="src">BINANCE WS · EXCHANGERATE-API</span>
     </div>
-
-    <div class="tv-grid">
-      <div class="tv-item"><div class="lbl">WTI · TVC:USOIL</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"TVC:USOIL","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">Brent · TVC:UKOIL</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"TVC:UKOIL","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">Gold · OANDA:XAUUSD</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"OANDA:XAUUSD","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">S&P 500 · FOREXCOM:SPXUSD</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"FOREXCOM:SPXUSD","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">Nasdaq 100 · FOREXCOM:NSXUSD</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"FOREXCOM:NSXUSD","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">BTC · BINANCE:BTCUSDT</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"BINANCE:BTCUSDT","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">Apple · NASDAQ:AAPL</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"NASDAQ:AAPL","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">Microsoft · NASDAQ:MSFT</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"NASDAQ:MSFT","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
-      <div class="tv-item"><div class="lbl">EUR/USD · FX:EURUSD</div>
-        <div class="tradingview-widget-container" style="height:190px">
-          <div class="tradingview-widget-container__widget"></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-          {"symbol":"FX:EURUSD","width":"100%","height":"190","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
-          </script>
-        </div>
-      </div>
+    <div class="panel-b">
+      <div class="metrics" id="liveMetrics"></div>
+      <div class="status" id="liveStatus"></div>
     </div>
-    <div class="note">Source: TradingView official free embeds. Some symbols may be delayed by exchange rules. Display only — not trading advice.</div>
   </section>
 
-  <section class="card">
-    <h2>
-      <span>أرقام حية سريعة</span>
-      <span class="src">Binance WebSocket · ExchangeRate-API</span>
-    </h2>
-    <div class="live-row" id="liveMetrics"></div>
-    <div class="status" id="liveStatus"></div>
+  <!-- Ticker tape -->
+  <section class="panel" style="margin-bottom:10px">
+    <div class="panel-h">
+      <h2>شريط الأسواق</h2>
+      <span class="src">TRADINGVIEW · LOCALE EN</span>
+    </div>
+    <div class="panel-b">
+      <div class="tv-tape">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+          {
+            "symbols": [
+              {"proName": "TVC:USOIL", "title": "WTI"},
+              {"proName": "TVC:UKOIL", "title": "Brent"},
+              {"proName": "OANDA:XAUUSD", "title": "Gold"},
+              {"proName": "BINANCE:BTCUSDT", "title": "BTC"},
+              {"proName": "BINANCE:ETHUSDT", "title": "ETH"},
+              {"proName": "FOREXCOM:SPXUSD", "title": "S&P 500"},
+              {"proName": "FOREXCOM:NSXUSD", "title": "Nasdaq 100"},
+              {"proName": "TVC:DJI", "title": "Dow"},
+              {"proName": "FX:EURUSD", "title": "EURUSD"},
+              {"proName": "FX:GBPUSD", "title": "GBPUSD"},
+              {"proName": "FX:USDJPY", "title": "USDJPY"},
+              {"proName": "FX_IDC:USDSAR", "title": "USDSAR"},
+              {"proName": "NASDAQ:AAPL", "title": "AAPL"},
+              {"proName": "NASDAQ:MSFT", "title": "MSFT"},
+              {"proName": "NASDAQ:NVDA", "title": "NVDA"},
+              {"proName": "NYSE:JPM", "title": "JPM"}
+            ],
+            "showSymbolLogo": true,
+            "isTransparent": true,
+            "displayMode": "adaptive",
+            "colorTheme": "dark",
+            "locale": "en"
+          }
+          </script>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>
-      <span>بث اقتصادي مباشر</span>
-      <span class="src">YouTube · Asharq Bloomberg</span>
-    </h2>
-    <div class="yt-wrap">
-      <iframe
-        src="https://www.youtube.com/embed/f6VpkfV7m4Y?autoplay=0&mute=1&playsinline=1&rel=0"
-        title="Asharq Bloomberg Live"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen
-        loading="lazy"
-        referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <div class="grid">
+    <!-- Advanced chart + symbol switcher -->
+    <section class="panel">
+      <div class="panel-h">
+        <h2>مخطط متقدم · نفط وأصول</h2>
+        <span class="src">TRADINGVIEW ADVANCED CHART · EN</span>
+      </div>
+      <div class="panel-b">
+        <div class="tv-chart tradingview-widget-container" id="tv_advanced">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {
+            "autosize": true,
+            "symbol": "TVC:USOIL",
+            "interval": "60",
+            "timezone": "Asia/Riyadh",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "allow_symbol_change": true,
+            "calendar": false,
+            "hide_top_toolbar": false,
+            "hide_legend": false,
+            "support_host": "https://www.tradingview.com",
+            "backgroundColor": "rgba(5, 7, 13, 1)",
+            "gridColor": "rgba(120, 140, 180, 0.08)"
+          }
+          </script>
+        </div>
+        <div class="note">Default WTI · use symbol search to switch Brent / Gold / BTC / indices / FX. English digits via locale en.</div>
+      </div>
+    </section>
+
+    <div class="side-stack">
+      <section class="panel">
+        <div class="panel-h">
+          <h2>نظرة عامة على الأسواق</h2>
+          <span class="src">MARKET OVERVIEW · EN</span>
+        </div>
+        <div class="panel-b">
+          <div class="tv-overview tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+            {
+              "colorTheme": "dark",
+              "dateRange": "1D",
+              "locale": "en",
+              "largeChartUrl": "",
+              "isTransparent": true,
+              "showFloatingTooltip": true,
+              "plotLineColorGrowing": "rgba(0, 230, 118, 1)",
+              "plotLineColorFalling": "rgba(255, 82, 82, 1)",
+              "gridLineColor": "rgba(120, 140, 180, 0.12)",
+              "scaleFontColor": "rgba(244, 247, 255, 1)",
+              "belowLineFillColorGrowing": "rgba(0, 230, 118, 0.12)",
+              "belowLineFillColorFalling": "rgba(255, 82, 82, 0.12)",
+              "belowLineFillColorGrowingBottom": "rgba(0, 230, 118, 0)",
+              "belowLineFillColorFallingBottom": "rgba(255, 82, 82, 0)",
+              "symbolActiveColor": "rgba(91, 140, 255, 0.16)",
+              "tabs": [
+                {
+                  "title": "Commodities",
+                  "symbols": [
+                    {"s": "TVC:USOIL", "d": "WTI"},
+                    {"s": "TVC:UKOIL", "d": "Brent"},
+                    {"s": "OANDA:XAUUSD", "d": "Gold"},
+                    {"s": "OANDA:XAGUSD", "d": "Silver"}
+                  ]
+                },
+                {
+                  "title": "Indices",
+                  "symbols": [
+                    {"s": "FOREXCOM:SPXUSD", "d": "S&P 500"},
+                    {"s": "FOREXCOM:NSXUSD", "d": "Nasdaq 100"},
+                    {"s": "TVC:DJI", "d": "Dow 30"},
+                    {"s": "TVC:VIX", "d": "VIX"}
+                  ]
+                },
+                {
+                  "title": "FX",
+                  "symbols": [
+                    {"s": "FX:EURUSD", "d": "EUR/USD"},
+                    {"s": "FX:GBPUSD", "d": "GBP/USD"},
+                    {"s": "FX:USDJPY", "d": "USD/JPY"},
+                    {"s": "FX_IDC:USDSAR", "d": "USD/SAR"}
+                  ]
+                },
+                {
+                  "title": "Crypto",
+                  "symbols": [
+                    {"s": "BINANCE:BTCUSDT", "d": "BTC"},
+                    {"s": "BINANCE:ETHUSDT", "d": "ETH"},
+                    {"s": "BINANCE:PAXGUSDT", "d": "PAXG"}
+                  ]
+                },
+                {
+                  "title": "Stocks",
+                  "symbols": [
+                    {"s": "NASDAQ:AAPL", "d": "Apple"},
+                    {"s": "NASDAQ:MSFT", "d": "Microsoft"},
+                    {"s": "NASDAQ:NVDA", "d": "NVIDIA"},
+                    {"s": "NYSE:JPM", "d": "JPMorgan"}
+                  ]
+                }
+              ],
+              "support_host": "https://www.tradingview.com",
+              "width": "100%",
+              "height": 400,
+              "showSymbolLogo": true,
+              "showChart": true
+            }
+            </script>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-h">
+          <h2>بث اقتصادي مباشر</h2>
+          <span class="src">ASHARQ BLOOMBERG · YOUTUBE</span>
+        </div>
+        <div class="panel-b">
+          <div class="yt-wrap">
+            <iframe
+              src="https://www.youtube.com/embed/f6VpkfV7m4Y?autoplay=0&mute=1&playsinline=1&rel=0"
+              title="Asharq Bloomberg Live"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          </div>
+          <div class="note"><a href="https://www.youtube.com/watch?v=f6VpkfV7m4Y" target="_blank" rel="noopener">Open stream</a></div>
+        </div>
+      </section>
     </div>
-    <div class="note">Official live from Asharq News on YouTube · <a href="https://www.youtube.com/watch?v=f6VpkfV7m4Y" target="_blank" rel="noopener">Open stream</a></div>
+  </div>
+
+  <!-- Mini overviews strip -->
+  <section class="panel" style="margin-top:10px">
+    <div class="panel-h">
+      <h2>أصول رئيسية</h2>
+      <span class="src">MINI OVERVIEWS · EN</span>
+    </div>
+    <div class="panel-b">
+      <div class="mini-grid">
+        <div class="tv-mini"><div class="lbl">WTI</div>
+          <div class="tradingview-widget-container" style="height:150px">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            {"symbol":"TVC:USOIL","width":"100%","height":"150","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+            </script>
+          </div>
+        </div>
+        <div class="tv-mini"><div class="lbl">BRENT</div>
+          <div class="tradingview-widget-container" style="height:150px">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            {"symbol":"TVC:UKOIL","width":"100%","height":"150","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+            </script>
+          </div>
+        </div>
+        <div class="tv-mini"><div class="lbl">GOLD</div>
+          <div class="tradingview-widget-container" style="height:150px">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            {"symbol":"OANDA:XAUUSD","width":"100%","height":"150","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+            </script>
+          </div>
+        </div>
+        <div class="tv-mini"><div class="lbl">BTC</div>
+          <div class="tradingview-widget-container" style="height:150px">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            {"symbol":"BINANCE:BTCUSDT","width":"100%","height":"150","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+            </script>
+          </div>
+        </div>
+        <div class="tv-mini"><div class="lbl">S&P 500</div>
+          <div class="tradingview-widget-container" style="height:150px">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            {"symbol":"FOREXCOM:SPXUSD","width":"100%","height":"150","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+            </script>
+          </div>
+        </div>
+        <div class="tv-mini"><div class="lbl">NASDAQ 100</div>
+          <div class="tradingview-widget-container" style="height:150px">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+            {"symbol":"FOREXCOM:NSXUSD","width":"100%","height":"150","locale":"en","dateRange":"1D","colorTheme":"dark","isTransparent":true,"autosize":true,"largeChartUrl":""}
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section class="card" id="calendarCard">
-    <h2>
-      <span>التقويم الاقتصادي</span>
-      <span class="src">Forex Factory mirror</span>
-    </h2>
-    <div class="scroll">
-      <table class="table" id="calTable">
-        <thead>
-          <tr><th>Time (Riyadh)</th><th>Country</th><th>Event</th><th>Impact</th><th>Previous</th><th>Forecast</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <section class="panel" id="calendarCard" style="margin-top:10px">
+    <div class="panel-h">
+      <h2>التقويم الاقتصادي</h2>
+      <span class="src">FOREX FACTORY MIRROR · SNAPSHOT</span>
     </div>
-    <div class="status" id="calStatus"></div>
+    <div class="panel-b">
+      <div class="scroll">
+        <table class="table" id="calTable">
+          <thead>
+            <tr><th>Time (Riyadh)</th><th>Country</th><th>Event</th><th>Impact</th><th>Previous</th><th>Forecast</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="status" id="calStatus"></div>
+    </div>
   </section>
 
   <footer class="footer">
-    Display only · No trade signals · Add to iPhone Home Screen from Safari<br/>
-    https://altypym444-beep.github.io/nabd-aswaq/
+    Display only · No trade signals · PWA · https://altypym444-beep.github.io/nabd-aswaq/
   </footer>
 </div>
 <script src="./app.js"></script>

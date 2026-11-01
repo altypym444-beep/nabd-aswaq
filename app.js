@@ -2,7 +2,6 @@
 (() => {
   const TZ = 'Asia/Riyadh';
   const $ = (id) => document.getElementById(id);
-  // Force English/Western digits always
   const fmtNum = (n, d = 2) => {
     if (n == null || Number.isNaN(Number(n))) return '—';
     return Number(n).toLocaleString('en-US', {
@@ -13,10 +12,10 @@
   };
   const chgClass = (p) => (Number(p) > 0 ? 'up' : Number(p) < 0 ? 'down' : 'flat');
   const chgText = (p) => {
-    if (p == null || Number.isNaN(Number(p))) return '—';
+    if (p == null || Number.isNaN(Number(p))) return '';
     const n = Number(p);
     const arrow = n > 0 ? '▲' : n < 0 ? '▼' : '•';
-    return `${arrow} ${Math.abs(n).toFixed(2)}%`;
+    return `${arrow} ${n > 0 ? '+' : n < 0 ? '-' : ''}${Math.abs(n).toFixed(2)}%`;
   };
   const riyadhTime = (iso) => {
     try {
@@ -27,28 +26,28 @@
     } catch { return String(iso || '—'); }
   };
   const clockNow = () => new Intl.DateTimeFormat('en-GB', {
-    timeZone: TZ, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    timeZone: TZ, weekday: 'short', year: 'numeric', month: 'short', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-  }).format(new Date()) + ' Asia/Riyadh';
+  }).format(new Date()) + '  Asia/Riyadh';
 
-  const state = { btc: null, eth: null, paxg: null, fx: null, wsOk: false };
+  const state = { btc: null, eth: null, paxg: null, fx: null };
 
   function renderMetrics() {
     const cards = [
-      { id: 'btc', k: 'Bitcoin', v: state.btc?.price, c: state.btc?.changePercent, d: 2, s: 'Binance WS · BTCUSDT' },
-      { id: 'eth', k: 'Ethereum', v: state.eth?.price, c: state.eth?.changePercent, d: 2, s: 'Binance WS · ETHUSDT' },
-      { id: 'paxg', k: 'Gold (PAXG)', v: state.paxg?.price, c: state.paxg?.changePercent, d: 2, s: 'Binance WS · PAXGUSDT' },
-      { id: 'sar', k: 'USD/SAR', v: state.fx?.pairs?.['USD/SAR'], c: null, d: 4, s: state.fx?.source || 'ExchangeRate-API' },
-      { id: 'eur', k: 'EUR/USD', v: state.fx?.pairs?.['EUR/USD'], c: null, d: 4, s: state.fx?.source || 'ExchangeRate-API' },
-      { id: 'gbp', k: 'GBP/USD', v: state.fx?.pairs?.['GBP/USD'], c: null, d: 4, s: state.fx?.source || 'ExchangeRate-API' },
-      { id: 'jpy', k: 'USD/JPY', v: state.fx?.pairs?.['USD/JPY'], c: null, d: 2, s: state.fx?.source || 'ExchangeRate-API' },
-      { id: 'aed', k: 'USD/AED', v: state.fx?.pairs?.['USD/AED'], c: null, d: 4, s: state.fx?.source || 'ExchangeRate-API' },
+      { id: 'btc', k: 'BTCUSDT', v: state.btc?.price, c: state.btc?.changePercent, d: 2, s: 'BINANCE WS' },
+      { id: 'eth', k: 'ETHUSDT', v: state.eth?.price, c: state.eth?.changePercent, d: 2, s: 'BINANCE WS' },
+      { id: 'paxg', k: 'PAXGUSDT', v: state.paxg?.price, c: state.paxg?.changePercent, d: 2, s: 'BINANCE WS' },
+      { id: 'sar', k: 'USD/SAR', v: state.fx?.pairs?.['USD/SAR'], c: null, d: 4, s: 'FX API' },
+      { id: 'eur', k: 'EUR/USD', v: state.fx?.pairs?.['EUR/USD'], c: null, d: 4, s: 'FX API' },
+      { id: 'gbp', k: 'GBP/USD', v: state.fx?.pairs?.['GBP/USD'], c: null, d: 4, s: 'FX API' },
+      { id: 'jpy', k: 'USD/JPY', v: state.fx?.pairs?.['USD/JPY'], c: null, d: 2, s: 'FX API' },
+      { id: 'aed', k: 'USD/AED', v: state.fx?.pairs?.['USD/AED'], c: null, d: 4, s: 'FX API' },
     ];
     $('liveMetrics').innerHTML = cards.map((x) => `
       <div class="metric" data-id="${x.id}">
-        <div class="k">${x.k}</div>
+        <div class="k"><span>${x.k}</span></div>
         <div class="v">${fmtNum(x.v, x.d)}</div>
-        <div class="chg ${chgClass(x.c)}">${x.c == null ? '' : chgText(x.c)}</div>
+        <div class="chg ${chgClass(x.c)}">${chgText(x.c)}</div>
         <div class="src">${x.s}</div>
       </div>`).join('');
   }
@@ -71,8 +70,7 @@
     const connect = () => {
       const ws = new WebSocket(url);
       ws.onopen = () => {
-        state.wsOk = true;
-        $('feedStatus').textContent = 'Binance WS connected';
+        $('feedStatus').textContent = 'BINANCE WS';
         retry = 0;
       };
       ws.onmessage = (ev) => {
@@ -89,8 +87,7 @@
         } catch (_) {}
       };
       ws.onclose = () => {
-        state.wsOk = false;
-        $('feedStatus').textContent = 'Binance WS reconnecting…';
+        $('feedStatus').textContent = 'RECONNECT…';
         setTimeout(connect, Math.min(15000, 1000 * Math.pow(2, retry++)));
       };
       ws.onerror = () => { try { ws.close(); } catch (_) {} };
@@ -115,13 +112,13 @@
         }
       };
       renderMetrics();
-      $('liveStatus').textContent = 'FX updated · ' + (d.time_last_update_utc || '');
+      $('liveStatus').textContent = 'FX OK · ' + (d.time_last_update_utc || '');
     } catch (_) {
       try {
         const bake = await fetch('./bake-fx.json?_=' + Date.now()).then((r) => r.json());
         state.fx = bake;
         renderMetrics();
-        $('liveStatus').textContent = 'FX from snapshot · ' + (bake.source || '');
+        $('liveStatus').textContent = 'FX snapshot · ' + (bake.source || '');
       } catch (e) {
         $('liveStatus').textContent = 'FX unavailable';
       }
@@ -136,20 +133,21 @@
       if (!events.length) throw new Error('empty');
       const pill = (imp) => {
         const t = (imp || '').toLowerCase();
-        if (t.includes('high')) return '<span class="badge-impact high">High</span>';
-        if (t.includes('medium') || t.includes('med')) return '<span class="badge-impact med">Medium</span>';
-        if (t.includes('holiday')) return '<span class="badge-impact holiday">Holiday</span>';
-        return '<span class="badge-impact low">Low</span>';
+        if (t.includes('high')) return '<span class="badge high">HIGH</span>';
+        if (t.includes('medium') || t.includes('med')) return '<span class="badge med">MED</span>';
+        if (t.includes('holiday')) return '<span class="badge holiday">HOL</span>';
+        return '<span class="badge low">LOW</span>';
       };
-      $('calTable').querySelector('tbody').innerHTML = events.slice(0, 30).map((e) => `<tr>
+      const toWestern = (s) => String(s ?? '—').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+      $('calTable').querySelector('tbody').innerHTML = events.slice(0, 35).map((e) => `<tr>
         <td class="num">${riyadhTime(e.date)}</td>
         <td>${e.country || '—'}</td>
         <td>${e.title || '—'}</td>
         <td>${pill(e.impact)}</td>
-        <td class="num">${e.previous || '—'}</td>
-        <td class="num">${e.forecast || '—'}</td>
+        <td class="num">${toWestern(e.previous)}</td>
+        <td class="num">${toWestern(e.forecast)}</td>
       </tr>`).join('');
-      $('calStatus').textContent = `Source: ${data.source} · snapshot`;
+      $('calStatus').textContent = `Source: ${data.source || 'calendar'} · ${events.length} events`;
     } catch (_) {
       card.style.display = 'none';
     }

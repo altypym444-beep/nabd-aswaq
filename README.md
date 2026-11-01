@@ -1,3 +1,3 @@
-# نبض الأسواق
-Clean Arabic RTL dashboard focused on live prices (TradingView + Binance) and Asharq Bloomberg live TV.
+# نبض الأسواق · Live Terminal
+Dense Arabic RTL markets terminal: TradingView (advanced chart + overview + tape), Binance WS, Asharq Bloomberg live.
 Display only. https://altypym444-beep.github.io/nabd-aswaq/
