@@ -2,7 +2,8 @@
 (() => {
   const TZ = 'Asia/Riyadh';
   const $ = (id) => document.getElementById(id);
-  const fmtNum = (n, d = 2) => {
+
+  const fmt = (n, d) => {
     if (n == null || Number.isNaN(Number(n))) return '—';
     return Number(n).toLocaleString('en-US', {
       maximumFractionDigits: d,
@@ -10,156 +11,201 @@
       useGrouping: true
     });
   };
-  const chgClass = (p) => (Number(p) > 0 ? 'up' : Number(p) < 0 ? 'down' : 'flat');
-  const chgText = (p) => {
-    if (p == null || Number.isNaN(Number(p))) return '';
-    const n = Number(p);
-    const arrow = n > 0 ? '▲' : n < 0 ? '▼' : '•';
-    return `${arrow} ${n > 0 ? '+' : n < 0 ? '-' : ''}${Math.abs(n).toFixed(2)}%`;
-  };
-  const riyadhTime = (iso) => {
-    try {
-      return new Intl.DateTimeFormat('en-GB', {
-        timeZone: TZ, weekday: 'short', day: '2-digit', month: 'short',
-        hour: '2-digit', minute: '2-digit', hour12: false
-      }).format(new Date(iso));
-    } catch { return String(iso || '—'); }
-  };
+
   const clockNow = () => new Intl.DateTimeFormat('en-GB', {
     timeZone: TZ, weekday: 'short', year: 'numeric', month: 'short', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
   }).format(new Date()) + '  Asia/Riyadh';
 
-  const state = { btc: null, eth: null, paxg: null, fx: null };
+  const state = {
+    gold: { price: null, open: null, digits: 2 },
+    brent: { price: null, open: null, digits: 2 },
+    wti: { price: null, open: null, digits: 2 },
+    btc: { price: null, open: null, digits: 2 },
+    ok: { gold: false, brent: false, wti: false, btc: false }
+  };
 
-  function renderMetrics() {
-    const cards = [
-      { id: 'btc', k: 'BTCUSDT', v: state.btc?.price, c: state.btc?.changePercent, d: 2, s: 'BINANCE WS' },
-      { id: 'eth', k: 'ETHUSDT', v: state.eth?.price, c: state.eth?.changePercent, d: 2, s: 'BINANCE WS' },
-      { id: 'paxg', k: 'PAXGUSDT', v: state.paxg?.price, c: state.paxg?.changePercent, d: 2, s: 'BINANCE WS' },
-      { id: 'sar', k: 'USD/SAR', v: state.fx?.pairs?.['USD/SAR'], c: null, d: 4, s: 'FX API' },
-      { id: 'eur', k: 'EUR/USD', v: state.fx?.pairs?.['EUR/USD'], c: null, d: 4, s: 'FX API' },
-      { id: 'gbp', k: 'GBP/USD', v: state.fx?.pairs?.['GBP/USD'], c: null, d: 4, s: 'FX API' },
-      { id: 'jpy', k: 'USD/JPY', v: state.fx?.pairs?.['USD/JPY'], c: null, d: 2, s: 'FX API' },
-      { id: 'aed', k: 'USD/AED', v: state.fx?.pairs?.['USD/AED'], c: null, d: 4, s: 'FX API' },
-    ];
-    $('liveMetrics').innerHTML = cards.map((x) => `
-      <div class="metric" data-id="${x.id}">
-        <div class="k"><span>${x.k}</span></div>
-        <div class="v">${fmtNum(x.v, x.d)}</div>
-        <div class="chg ${chgClass(x.c)}">${chgText(x.c)}</div>
-        <div class="src">${x.s}</div>
-      </div>`).join('');
+  function setStatus() {
+    const parts = [];
+    if (state.ok.btc) parts.push('BTC');
+    if (state.ok.gold) parts.push('GOLD');
+    if (state.ok.wti) parts.push('WTI');
+    if (state.ok.brent) parts.push('BRENT');
+    $('feedStatus').textContent = parts.length ? ('WS ' + parts.join('·')) : 'CONNECTING';
   }
 
-  function setMetric(id, price, change, digits) {
-    const el = document.querySelector(`.metric[data-id="${id}"]`);
+  function pulse(id, dir) {
+    const el = document.querySelector(`.pcard[data-id="${id}"]`);
     if (!el) return;
-    el.querySelector('.v').textContent = fmtNum(price, digits);
-    if (change != null) {
-      const c = el.querySelector('.chg');
-      c.className = 'chg ' + chgClass(change);
-      c.textContent = chgText(change);
-    }
+    el.classList.remove('flash-up', 'flash-down');
+    // force reflow for repeated pulses
+    void el.offsetWidth;
+    el.classList.add(dir === 'up' ? 'flash-up' : dir === 'down' ? 'flash-down' : '');
+    clearTimeout(el._pulseTimer);
+    el._pulseTimer = setTimeout(() => el.classList.remove('flash-up', 'flash-down'), 450);
   }
 
-  function startBinance() {
-    const streams = ['btcusdt@ticker', 'ethusdt@ticker', 'paxgusdt@ticker'].join('/');
-    const url = 'wss://stream.binance.com:9443/stream?streams=' + streams;
+  function updateCard(id, price, meta) {
+    const st = state[id];
+    if (price == null || Number.isNaN(Number(price))) return;
+    const p = Number(price);
+    const prev = st.price;
+    st.price = p;
+    if (st.open == null) st.open = p;
+    if (meta && meta.open != null && Number(meta.open) > 0) st.open = Number(meta.open);
+
+    const priceEl = $('p-' + id);
+    const chgEl = $('c-' + id);
+    const srcEl = $('s-' + id);
+    priceEl.textContent = fmt(p, st.digits);
+
+    if (prev != null && p !== prev) {
+      pulse(id, p > prev ? 'up' : 'down');
+    }
+
+    if (st.open) {
+      const chg = ((p - st.open) / st.open) * 100;
+      const arrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '•';
+      chgEl.textContent = `${arrow} ${chg > 0 ? '+' : chg < 0 ? '-' : ''}${Math.abs(chg).toFixed(2)}%`;
+      chgEl.className = 'chg ' + (chg > 0 ? 'up' : chg < 0 ? 'down' : 'flat');
+    }
+
+    if (meta && meta.src) srcEl.textContent = meta.src;
+    state.ok[id] = true;
+    setStatus();
+  }
+
+  function connectWS(url, { onmsg, onopen, label, retryKey }) {
     let retry = 0;
-    const connect = () => {
-      const ws = new WebSocket(url);
-      ws.onopen = () => {
-        $('feedStatus').textContent = 'BINANCE WS';
-        retry = 0;
-      };
+    const go = () => {
+      let ws;
+      try { ws = new WebSocket(url); } catch (e) {
+        setTimeout(go, Math.min(15000, 1000 * Math.pow(2, retry++)));
+        return;
+      }
+      ws.onopen = () => { retry = 0; onopen && onopen(ws); };
       ws.onmessage = (ev) => {
-        try {
-          const msg = JSON.parse(ev.data);
-          const d = msg.data || msg;
-          const sym = (d.s || '').toUpperCase();
-          const price = Number(d.c);
-          const change = Number(d.P);
-          if (!price) return;
-          if (sym === 'BTCUSDT') { state.btc = { price, changePercent: change }; setMetric('btc', price, change, 2); }
-          if (sym === 'ETHUSDT') { state.eth = { price, changePercent: change }; setMetric('eth', price, change, 2); }
-          if (sym === 'PAXGUSDT') { state.paxg = { price, changePercent: change }; setMetric('paxg', price, change, 2); }
-        } catch (_) {}
+        try { onmsg(ev.data, ws); } catch (_) {}
       };
       ws.onclose = () => {
-        $('feedStatus').textContent = 'RECONNECT…';
-        setTimeout(connect, Math.min(15000, 1000 * Math.pow(2, retry++)));
+        if (label) console.warn('ws close', label);
+        setTimeout(go, Math.min(15000, 1000 * Math.pow(2, retry++)));
       };
       ws.onerror = () => { try { ws.close(); } catch (_) {} };
     };
-    connect();
+    go();
   }
 
-  async function loadFx() {
-    try {
-      const d = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' }).then((r) => r.json());
-      if (d.result !== 'success') throw new Error('fx');
-      const r = d.rates;
-      state.fx = {
-        source: 'ExchangeRate-API',
-        pairs: {
-          'EUR/USD': 1 / r.EUR,
-          'GBP/USD': 1 / r.GBP,
-          'USD/JPY': r.JPY,
-          'USD/SAR': r.SAR,
-          'USD/AED': r.AED,
-          'USD/CHF': r.CHF,
+  // —— Bitcoin: Binance spot trade stream (sub-second) ——
+  // Prefer market-data host; fall back to stream.binance.com
+  (function startBtc() {
+    const hosts = [
+      'wss://data-stream.binance.vision/ws/btcusdt@trade',
+      'wss://stream.binance.com:9443/ws/btcusdt@trade'
+    ];
+    let hostIdx = 0;
+    let opened = false;
+    const tryHost = () => {
+      const url = hosts[hostIdx % hosts.length];
+      let retry = 0;
+      const go = () => {
+        let ws;
+        try { ws = new WebSocket(url); } catch (_) {
+          hostIdx++; setTimeout(tryHost, 800); return;
+        }
+        const timer = setTimeout(() => {
+          if (!opened) { try { ws.close(); } catch (_) {} }
+        }, 6000);
+        ws.onopen = () => { opened = true; clearTimeout(timer); retry = 0; };
+        ws.onmessage = (ev) => {
+          const d = JSON.parse(ev.data);
+          const price = Number(d.p);
+          updateCard('btc', price, {
+            src: 'Binance WS · btcusdt@trade · sub-second trades'
+          });
+        };
+        ws.onclose = () => {
+          clearTimeout(timer);
+          if (!opened && hostIdx < hosts.length - 1) {
+            hostIdx++; setTimeout(tryHost, 400); return;
+          }
+          setTimeout(go, Math.min(15000, 1000 * Math.pow(2, retry++)));
+        };
+        ws.onerror = () => { try { ws.close(); } catch (_) {} };
+      };
+      go();
+    };
+    tryHost();
+  })();
+
+  // —— Gold / WTI / Brent via MEXC contract WS (deal + ticker) ——
+  // Gold: XAU_USDT perp (honest label — exchange TradFi gold perpetual, not LBMA fix)
+  // WTI: USOIL_USDT · Brent: UKOIL_USDT
+  (function startMexC() {
+    const url = 'wss://contract.mexc.com/edge';
+    const map = {
+      XAU_USDT: { id: 'gold', srcDeal: 'MEXC WS · XAU_USDT deal · gold TradFi perp', srcTick: 'MEXC WS · XAU_USDT ticker · gold TradFi perp' },
+      UKOIL_USDT: { id: 'brent', srcDeal: 'MEXC WS · UKOIL_USDT deal · Brent perp', srcTick: 'MEXC WS · UKOIL_USDT ticker · Brent perp' },
+      USOIL_USDT: { id: 'wti', srcDeal: 'MEXC WS · USOIL_USDT deal · WTI perp', srcTick: 'MEXC WS · USOIL_USDT ticker · WTI perp' }
+    };
+    let retry = 0;
+    const go = () => {
+      let ws;
+      try { ws = new WebSocket(url); } catch (_) {
+        setTimeout(go, Math.min(15000, 1000 * Math.pow(2, retry++))); return;
+      }
+      ws.onopen = () => {
+        retry = 0;
+        Object.keys(map).forEach((sym) => {
+          ws.send(JSON.stringify({ method: 'sub.deal', param: { symbol: sym, limit: 1 } }));
+          ws.send(JSON.stringify({ method: 'sub.ticker', param: { symbol: sym } }));
+        });
+      };
+      ws.onmessage = (ev) => {
+        let d;
+        try { d = JSON.parse(ev.data); } catch (_) { return; }
+        const sym = d.symbol;
+        const m = map[sym];
+        if (!m) return;
+        if (d.channel === 'push.deal' && Array.isArray(d.data) && d.data[0]) {
+          updateCard(m.id, d.data[0].p, { src: m.srcDeal });
+          return;
+        }
+        // ticker pushes sometimes omit channel
+        const td = d.data;
+        if (td && typeof td === 'object' && !Array.isArray(td) && td.lastPrice != null) {
+          const openGuess = td.lastPrice && td.riseFallRate != null
+            ? Number(td.lastPrice) / (1 + Number(td.riseFallRate))
+            : null;
+          updateCard(m.id, td.lastPrice, {
+            src: m.srcTick,
+            open: openGuess
+          });
         }
       };
-      renderMetrics();
-      $('liveStatus').textContent = 'FX OK · ' + (d.time_last_update_utc || '');
-    } catch (_) {
-      try {
-        const bake = await fetch('./bake-fx.json?_=' + Date.now()).then((r) => r.json());
-        state.fx = bake;
-        renderMetrics();
-        $('liveStatus').textContent = 'FX snapshot · ' + (bake.source || '');
-      } catch (e) {
-        $('liveStatus').textContent = 'FX unavailable';
-      }
-    }
-  }
+      ws.onclose = () => setTimeout(go, Math.min(15000, 1000 * Math.pow(2, retry++)));
+      ws.onerror = () => { try { ws.close(); } catch (_) {} };
+    };
+    go();
+  })();
 
-  async function loadCalendar() {
-    const card = $('calendarCard');
-    try {
-      const data = await fetch('./bake-calendar.json?_=' + Date.now()).then((r) => r.json());
-      const events = data.events || [];
-      if (!events.length) throw new Error('empty');
-      const pill = (imp) => {
-        const t = (imp || '').toLowerCase();
-        if (t.includes('high')) return '<span class="badge high">HIGH</span>';
-        if (t.includes('medium') || t.includes('med')) return '<span class="badge med">MED</span>';
-        if (t.includes('holiday')) return '<span class="badge holiday">HOL</span>';
-        return '<span class="badge low">LOW</span>';
-      };
-      const toWestern = (s) => String(s ?? '—').replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-      $('calTable').querySelector('tbody').innerHTML = events.slice(0, 35).map((e) => `<tr>
-        <td class="num">${riyadhTime(e.date)}</td>
-        <td>${e.country || '—'}</td>
-        <td>${e.title || '—'}</td>
-        <td>${pill(e.impact)}</td>
-        <td class="num">${toWestern(e.previous)}</td>
-        <td class="num">${toWestern(e.forecast)}</td>
-      </tr>`).join('');
-      $('calStatus').textContent = `Source: ${data.source || 'calendar'} · ${events.length} events`;
-    } catch (_) {
-      card.style.display = 'none';
-    }
-  }
+  // —— Gold fallback: Binance PAXG trade (tokenized gold) if MEXC gold silent ——
+  setTimeout(() => {
+    if (state.ok.gold) return;
+    const url = 'wss://data-stream.binance.vision/ws/paxgusdt@trade';
+    connectWS(url, {
+      label: 'paxg',
+      onmsg: (raw) => {
+        const d = JSON.parse(raw);
+        updateCard('gold', d.p, {
+          src: 'Binance WS · paxgusdt@trade · tokenized gold (PAXG proxy)'
+        });
+      }
+    });
+  }, 8000);
 
   setInterval(() => { $('clock').textContent = clockNow(); }, 1000);
   $('clock').textContent = clockNow();
-  renderMetrics();
-  startBinance();
-  loadFx();
-  loadCalendar();
-  setInterval(loadFx, 60 * 1000);
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 })();
