@@ -252,19 +252,92 @@
     setTimeout(apply, 2500);
   })();
 
-  // Service worker: network-first shell + one-shot reload on update
-  if ('serviceWorker' in navigator) {
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return;
-      const flag = 'sw-reloaded-v3-20261102';
-      if (sessionStorage.getItem(flag)) return;
-      refreshing = true;
-      try { sessionStorage.setItem(flag, '1'); } catch (_) {}
-      location.reload();
+
+  // —— Welcome toast (once per session) ——
+  (function welcome() {
+    const host = document.getElementById('toastHost');
+    if (!host) return;
+    try { if (sessionStorage.getItem('nabd-welcome')) return; sessionStorage.setItem('nabd-welcome', '1'); } catch (_) {}
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = 'السوق حي الحين 🔥<br><span class="sub">ذهب · برنت · WTI · بيتكوين — نبض لحظة بلحظة</span>';
+    host.appendChild(t);
+    setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 400); }, 4500);
+  })();
+
+  function showToast(html, ms) {
+    const host = document.getElementById('toastHost');
+    if (!host) return;
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = html;
+    host.appendChild(t);
+    setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 400); }, ms || 4000);
+  }
+
+  // —— Optional big-move notifications (>1%) ——
+  const lastAlert = { gold: 0, brent: 0, wti: 0, btc: 0 };
+  const names = { gold: 'الذهب', brent: 'برنت', wti: 'WTI', btc: 'البيتكوين' };
+  let notifyOn = false;
+
+  const btn = document.getElementById('btnNotify');
+  if (btn) {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      notifyOn = true;
+      btn.textContent = 'التنبيهات شغّالة ✅';
+    }
+    btn.addEventListener('click', async () => {
+      if (typeof Notification === 'undefined') {
+        showToast('المتصفح ما يدعم التنبيهات 😅', 3000);
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        notifyOn = true;
+        btn.textContent = 'التنبيهات شغّالة ✅';
+        showToast('يلا! بتنبهك على أي حركة قوية فوق 1٪ 🚀', 3500);
+        try {
+          new Notification('نبض الأسواق', { body: 'التنبيهات فعّالة — خلك قريب من السوق ⚡', icon: './icon-192.png' });
+        } catch (_) {}
+      } else {
+        showToast('ما تم تفعيل التنبيهات — تقدر تجرب مرة ثانية من الزر', 3500);
+      }
     });
-    navigator.serviceWorker.register('./sw.js?v=v3-20261102').then((reg) => {
-      reg.update().catch(() => {});
-    }).catch(() => {});
+  }
+
+  // Hook into updateCard for >1% move alerts
+  const _updateCard = updateCard;
+  updateCard = function(id, price, meta) {
+    const prev = state[id].price;
+    const prevOpen = state[id].open;
+    _updateCard(id, price, meta);
+    const st = state[id];
+    if (!st.open || st.price == null) return;
+    const chg = ((st.price - st.open) / st.open) * 100;
+    if (Math.abs(chg) < 1) return;
+    const now = Date.now();
+    if (now - (lastAlert[id] || 0) < 120000) return; // cooldown 2 min per card
+    // only fire when crossing or refreshing big move after cooldown
+    lastAlert[id] = now;
+    const up = chg > 0;
+    const msg = up
+      ? `يا سلام! ${names[id]} يطير 🚀 ${chg.toFixed(2)}٪`
+      : `انتبه! ${names[id]} ينزل بسرعة 📉 ${chg.toFixed(2)}٪`;
+    showToast(msg, 4200);
+    if (notifyOn && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        new Notification('نبض الأسواق', {
+          body: msg.replace(/<[^>]+>/g, ''),
+          icon: './icon-192.png',
+          tag: 'nabd-' + id,
+          silent: false
+        });
+      } catch (_) {}
+    }
+  };
+
+  // Ensure any leftover SW stays unregistered (page already kills them)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});
   }
 })();

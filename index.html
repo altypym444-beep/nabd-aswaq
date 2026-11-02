@@ -4,6 +4,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <meta name="theme-color" content="#05070d" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -12,169 +14,46 @@
 <title>نبض الأسواق · Live Terminal</title>
 <link rel="manifest" href="./manifest.webmanifest" />
 <link rel="apple-touch-icon" href="./icon-180.png" />
-<link rel="icon" href="./icon-192.png" />
+<link rel="icon" type="image/x-icon" href="./favicon.ico" />
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<script>
+/* Nuke stale service workers + caches ASAP (fixes Ctrl+F5-only updates) */
+(function() {
+  var KILL = 'nabd-sw-kill-v4';
+  try {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(rs) {
+        rs.forEach(function(r) { r.unregister(); });
+      });
+    }
+    if (window.caches && caches.keys) {
+      caches.keys().then(function(keys) {
+        keys.forEach(function(k) { caches.delete(k); });
+      });
+    }
+  } catch (e) {}
+})();
+</script>
 <style>
-:root {
-  --bg: #05070d;
-  --panel: #0a0f1a;
-  --card: #0c1220;
-  --line: rgba(120,140,180,.14);
-  --text: #f4f7ff;
-  --muted: #8b97b0;
-  --dim: #5c6a84;
-  --green: #00e676;
-  --red: #ff5252;
-  --cyan: #5eead4;
-  --font: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
-  --num: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-}
-* { box-sizing: border-box; }
-html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family:var(--font); }
-body {
-  min-height:100vh;
-  background:
-    radial-gradient(900px 420px at 90% -5%, rgba(91,140,255,.08), transparent 55%),
-    radial-gradient(700px 380px at 5% 0%, rgba(94,234,212,.06), transparent 50%),
-    #05070d;
-}
-a { color: var(--cyan); text-decoration:none; }
-.shell { max-width: 1480px; margin: 0 auto; padding: 10px 10px 28px; }
-
-.tb {
-  display:flex; flex-wrap:wrap; gap:10px 14px; justify-content:space-between; align-items:center;
-  border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:10px;
-  background: linear-gradient(180deg, #0e1526, #0a101c);
-}
-.logo { font-weight:800; font-size:1.05rem; display:flex; align-items:center; gap:8px; }
-.logo .mark { width:9px; height:9px; border-radius:2px; background:var(--cyan); box-shadow:0 0 12px var(--cyan); }
-.tag { color:var(--dim); font-size:.7rem; border:1px solid var(--line); border-radius:4px; padding:2px 7px; letter-spacing:.5px; font-family:var(--num); }
-.livepill {
-  display:inline-flex; align-items:center; gap:6px; font-family:var(--num); font-weight:700; font-size:.72rem;
-  color:var(--green); background:rgba(0,230,118,.08); border:1px solid rgba(0,230,118,.28); border-radius:999px; padding:3px 9px;
-}
-.livepill .d { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.5s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
-.meta { color:var(--muted); font-size:.78rem; font-family:var(--num); text-align:left; line-height:1.45; }
-@media (max-width:720px){ .meta{ text-align:right; } }
-
-.panel {
-  background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-bottom:10px;
-}
-.panel-h {
-  display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;
-  padding:8px 12px; border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
-}
-.panel-h h2 { margin:0; font-size:.84rem; font-weight:700; }
-.panel-h .src { color:var(--dim); font-size:.68rem; font-family:var(--num); }
-.panel-b { padding:10px; }
-
-/* 4 giant price cards */
-.cards {
-  display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:10px;
-}
-@media (max-width:1100px){ .cards { grid-template-columns:1fr 1fr; } }
-@media (max-width:560px){ .cards { grid-template-columns:1fr; } }
-
-.pcard {
-  position:relative; background:var(--card); border:1px solid var(--line); border-radius:14px;
-  padding:18px 16px 14px; min-height:148px; overflow:hidden;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
-}
-.pcard::before {
-  content:""; position:absolute; inset:0 auto 0 0; width:3px;
-  background:linear-gradient(180deg, var(--cyan), transparent); opacity:.55;
-}
-.pcard .name {
-  color:var(--muted); font-size:.8rem; font-weight:700; letter-spacing:.3px;
-  display:flex; justify-content:space-between; align-items:center; gap:8px;
-}
-.pcard .price {
-  margin-top:12px;
-  font-family:var(--num);
-  font-variant-numeric: lining-nums tabular-nums;
-  font-size: clamp(2.1rem, 4.2vw, 3.15rem);
-  font-weight:800; color:#fff; letter-spacing:.4px; line-height:1.05;
-}
-.pcard .chg {
-  margin-top:10px; font-family:var(--num); font-variant-numeric:lining-nums tabular-nums;
-  font-size:1.05rem; font-weight:800; min-height:1.2em;
-}
-.pcard .src {
-  margin-top:10px; color:var(--dim); font-size:.65rem; font-family:var(--num); line-height:1.35;
-}
-.up { color: var(--green); }
-.down { color: var(--red); }
-.flat { color: var(--muted); }
-
-.pcard.flash-up {
-  border-color: rgba(0,230,118,.85);
-  box-shadow: 0 0 0 1px rgba(0,230,118,.35), 0 0 28px rgba(0,230,118,.22), inset 0 0 40px rgba(0,230,118,.05);
-}
-.pcard.flash-down {
-  border-color: rgba(255,82,82,.85);
-  box-shadow: 0 0 0 1px rgba(255,82,82,.35), 0 0 28px rgba(255,82,82,.22), inset 0 0 40px rgba(255,82,82,.05);
-}
-
-/* TradingView must fill the whole box — height chain + iframe 100% */
-.panel.chart-panel { margin-bottom: 0; border-radius: 12px 12px 0 0; }
-.panel.stream-panel { margin-top: 0; border-radius: 0 0 12px 12px; border-top: none; }
-.panel.chart-panel .panel-b,
-.panel.stream-panel .panel-b { padding: 0; }
-.tv-chart {
-  height: 75vh;
-  min-height: 520px;
-  width: 100%;
-  overflow: hidden;
-  background: #000;
-  position: relative;
-}
-@media (max-width:700px){
-  .tv-chart { height: 60vh; min-height: 380px; }
-}
-.tv-chart.tradingview-widget-container,
-.tradingview-widget-container.tv-chart {
-  height: 75vh;
-  width: 100%;
-}
-@media (max-width:700px){
-  .tv-chart.tradingview-widget-container,
-  .tradingview-widget-container.tv-chart { height: 60vh; }
-}
-.tv-chart .tradingview-widget-container__widget,
-.tradingview-widget-container__widget {
-  height: 100% !important;
-  width: 100% !important;
-}
-.tv-chart iframe,
-.tradingview-widget-container iframe {
-  height: 100% !important;
-  width: 100% !important;
-  display: block;
-  border: 0;
-}
-
-.yt-wrap {
-  position:relative; width:100%; padding-top:56.25%;
-  border-radius:10px; overflow:hidden; background:#000; border:1px solid var(--line);
-}
-.yt-wrap iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
-
-.note { margin-top:8px; color:var(--dim); font-size:.7rem; font-family:var(--num); line-height:1.5; }
-.footer { text-align:center; color:var(--dim); font-size:.68rem; line-height:1.7; margin-top:8px; font-family:var(--num); }
+html,body{margin:0;background:#05070d;color:#f4f7ff;font-family:system-ui,sans-serif}
+.boot-msg{padding:24px;text-align:center;color:#5eead4;font-weight:700}
 </style>
 </head>
 <body>
-<div class="shell">
+<div id="boot" class="boot-msg">جاري نبض السوق… ⚡</div>
+<div class="toast-host" id="toastHost" aria-live="polite"></div>
+<div class="shell" id="appShell">
   <header class="tb">
     <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
       <div class="logo"><span class="mark"></span> نبض الأسواق</div>
       <span class="tag">TERMINAL</span>
       <span class="livepill"><span class="d"></span> LIVE</span>
       <span class="tag" id="feedStatus">CONNECTING</span>
+      <button type="button" class="btn-notify" id="btnNotify" title="تنبيهات التحركات الكبيرة">فعّل التنبيهات 🔔</button>
     </div>
     <div class="meta">
       <div id="clock">—</div>
@@ -260,6 +139,79 @@ a { color: var(--cyan); text-decoration:none; }
     Display only · No trade signals · PWA · https://altypym444-beep.github.io/nabd-aswaq/
   </footer>
 </div>
-<script src="./app.js?v=v3-20261102"></script>
+
+<script>
+/* Versioned asset loader — always bypass CDN/browser cache via cache:no-store + bust query */
+(function () {
+  var VERSION_URL = './version.json';
+  var pollMs = 60000;
+  var current = null;
+
+  function loadCss(v) {
+    var href = './styles.css?v=' + encodeURIComponent(v);
+    if (document.querySelector('link[data-nabd-css]')) {
+      document.querySelector('link[data-nabd-css]').href = href;
+      return;
+    }
+    var l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = href;
+    l.setAttribute('data-nabd-css', '1');
+    document.head.appendChild(l);
+  }
+
+  function loadJs(v) {
+    return new Promise(function (resolve, reject) {
+      var old = document.querySelector('script[data-nabd-app]');
+      if (old) old.remove();
+      var s = document.createElement('script');
+      s.src = './app.js?v=' + encodeURIComponent(v);
+      s.async = true;
+      s.setAttribute('data-nabd-app', '1');
+      s.onload = resolve;
+      s.onerror = reject;
+      document.body.appendChild(s);
+    });
+  }
+
+  function fetchVersion() {
+    return fetch(VERSION_URL + '?t=' + Date.now(), { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+      .then(function (r) { if (!r.ok) throw new Error('version ' + r.status); return r.json(); });
+  }
+
+  function boot() {
+    fetchVersion().then(function (ver) {
+      current = String(ver.version || ver.commit || Date.now());
+      window.__NABD_VERSION__ = current;
+      loadCss(current);
+      return loadJs(current);
+    }).then(function () {
+      var b = document.getElementById('boot');
+      if (b) b.remove();
+    }).catch(function (err) {
+      console.error(err);
+      // fallback without version
+      loadCss('fallback');
+      loadJs('fallback').finally(function () {
+        var b = document.getElementById('boot');
+        if (b) b.textContent = 'تم التحميل (وضع احتياطي)';
+        setTimeout(function() { if (b) b.remove(); }, 800);
+      });
+    });
+  }
+
+  boot();
+
+  setInterval(function () {
+    fetchVersion().then(function (ver) {
+      var next = String(ver.version || ver.commit || '');
+      if (current && next && next !== current) {
+        // Soft reload to pick new assets (no hard refresh needed)
+        location.reload();
+      }
+    }).catch(function () {});
+  }, pollMs);
+})();
+</script>
 </body>
 </html>

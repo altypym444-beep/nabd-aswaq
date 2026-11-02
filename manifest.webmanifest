@@ -3,21 +3,23 @@
   "short_name": "نبض الأسواق",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./",
+  "start_url": "./?source=pwa",
   "display": "standalone",
-  "background_color": "#050816",
-  "theme_color": "#050816",
-  "description": "لوحة عربية حية للأخبار والمؤشرات والأسعار — للعرض فقط",
+  "background_color": "#05070d",
+  "theme_color": "#05070d",
+  "description": "لوحة عربية حية للذهب والنفط والبتكوين — للعرض فقط",
   "icons": [
     {
       "src": "./icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "./icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "./icon-180.png",
