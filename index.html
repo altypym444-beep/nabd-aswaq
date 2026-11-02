@@ -54,6 +54,7 @@ html,body{margin:0;background:#05070d;color:#f4f7ff;font-family:system-ui,sans-s
       <span class="livepill"><span class="d"></span> LIVE</span>
       <span class="tag" id="feedStatus">CONNECTING</span>
       <button type="button" class="btn-notify" id="btnNotify" title="تنبيهات التحركات الكبيرة">فعّل التنبيهات 🔔</button>
+      <button type="button" class="btn-mute" id="btnMute" title="كتم صوت التنبيهات">صوت 🔊</button>
     </div>
     <div class="meta">
       <div id="clock">—</div>
@@ -63,76 +64,79 @@ html,body{margin:0;background:#05070d;color:#f4f7ff;font-family:system-ui,sans-s
 
   <section class="cards" id="priceCards" aria-label="Live prices">
     <article class="pcard" data-id="gold">
-      <div class="name"><span>GOLD</span><span class="tag">XAU</span></div>
+      <div class="name"><span class="left"><span class="ws-dot" id="dot-gold" title="WS"></span>GOLD</span><span class="tag">XAU</span></div>
       <div class="price" id="p-gold">—</div>
       <div class="chg flat" id="c-gold"></div>
       <div class="src" id="s-gold">connecting…</div>
     </article>
     <article class="pcard" data-id="brent">
-      <div class="name"><span>BRENT</span><span class="tag">UKOIL</span></div>
+      <div class="name"><span class="left"><span class="ws-dot" id="dot-brent" title="WS"></span>BRENT</span><span class="tag">UKOIL</span></div>
       <div class="price" id="p-brent">—</div>
       <div class="chg flat" id="c-brent"></div>
       <div class="src" id="s-brent">connecting…</div>
     </article>
     <article class="pcard" data-id="wti">
-      <div class="name"><span>WTI</span><span class="tag">USOIL</span></div>
+      <div class="name"><span class="left"><span class="ws-dot" id="dot-wti" title="WS"></span>WTI</span><span class="tag">USOIL</span></div>
       <div class="price" id="p-wti">—</div>
       <div class="chg flat" id="c-wti"></div>
       <div class="src" id="s-wti">connecting…</div>
     </article>
     <article class="pcard" data-id="btc">
-      <div class="name"><span>BITCOIN</span><span class="tag">BTC</span></div>
+      <div class="name"><span class="left"><span class="ws-dot" id="dot-btc" title="WS"></span>BITCOIN</span><span class="tag">BTC</span></div>
       <div class="price" id="p-btc">—</div>
       <div class="chg flat" id="c-btc"></div>
       <div class="src" id="s-btc">connecting…</div>
     </article>
   </section>
 
-  <section class="panel chart-panel">
-    <div class="panel-h">
-      <h2>مخطط النفط المتقدم</h2>
-      <span class="src">TRADINGVIEW · WTI · SYMBOL SWITCHER · LOCALE EN</span>
-    </div>
-    <div class="panel-b">
-      <div class="tradingview-widget-container tv-chart">
-        <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-        {
-          "autosize": true,
-          "symbol": "TVC:USOIL",
-          "interval": "15",
-          "timezone": "Asia/Riyadh",
-          "theme": "dark",
-          "style": "1",
-          "locale": "en",
-          "allow_symbol_change": true,
-          "calendar": false,
-          "hide_top_toolbar": false,
-          "support_host": "https://www.tradingview.com",
-          "backgroundColor": "rgba(5, 7, 13, 1)",
-          "gridColor": "rgba(120, 140, 180, 0.08)"
-        }
-        </script>
+  <section class="split" id="splitPane" aria-label="Chart and live stream">
+    <!-- RTL: first item renders on the RIGHT -->
+    <article class="panel chart-panel">
+      <div class="panel-h">
+        <h2>مخطط النفط المتقدم</h2>
+        <span class="src">TRADINGVIEW · WTI · EN</span>
       </div>
-    </div>
-  </section>
+      <div class="panel-b">
+        <div class="tradingview-widget-container tv-chart">
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {
+            "autosize": true,
+            "symbol": "TVC:USOIL",
+            "interval": "15",
+            "timezone": "Asia/Riyadh",
+            "theme": "dark",
+            "style": "1",
+            "locale": "en",
+            "allow_symbol_change": true,
+            "calendar": false,
+            "hide_top_toolbar": false,
+            "support_host": "https://www.tradingview.com",
+            "backgroundColor": "rgba(5, 7, 13, 1)",
+            "gridColor": "rgba(120, 140, 180, 0.08)"
+          }
+          </script>
+        </div>
+      </div>
+    </article>
 
-  <section class="panel stream-panel">
-    <div class="panel-h">
-      <h2>بث الشرق بلومبرغ المباشر</h2>
-      <span class="src">ASHARQ BLOOMBERG · YOUTUBE LIVE · FULL WIDTH</span>
-    </div>
-    <div class="panel-b">
-      <div class="yt-wrap">
-        <iframe
-          src="https://www.youtube.com/embed/f6VpkfV7m4Y?autoplay=0&mute=1&playsinline=1&rel=0"
-          title="Asharq Bloomberg Live"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowfullscreen
-          loading="lazy"
-          referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <article class="panel stream-panel">
+      <div class="panel-h">
+        <h2>بث الشرق بلومبرغ المباشر</h2>
+        <span class="src">ASHARQ BLOOMBERG · LIVE</span>
       </div>
-    </div>
+      <div class="panel-b">
+        <div class="yt-fill">
+          <iframe
+            src="https://www.youtube.com/embed/f6VpkfV7m4Y?autoplay=0&mute=1&playsinline=1&rel=0"
+            title="Asharq Bloomberg Live"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+      </div>
+    </article>
   </section>
 
   <footer class="footer">
